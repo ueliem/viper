@@ -16,17 +16,26 @@ def main(stdscr):
   modeman.add_mode(NormalMode())
   modeman.add_mode(InputMode())
   modeman.set_mode("inpmode")
-
+  topmostlinenum = 0
   while True:
     if modeman.current_mode.mode_id == "inpmode":
       # stdscr.addstr(5, 0, "Edit mode")
       event = stdscr.getch()
-      stdscr.clear()
       if event == 27:
         modeman.set_mode("nrmlmode")
+      if event == curses.KEY_UP:
+        topmostlinenum -= 1
+      elif event == curses.KEY_DOWN:
+        topmostlinenum += 1
+
       if is_chr(event):
         mybuf += chr(event)
-      stdscr.addstr(mybuf)
+      # stdscr.addstr(0,0, mybuf)
+      bottommostlinenum = topmostlinenum + curses.LINES
+      stdscr.erase()
+      for (index,line) in enumerate(mybuf.split("\n")[topmostlinenum:bottommostlinenum]):
+        stdscr.addstr(index, 0, line)
+
     elif modeman.current_mode.mode_id == "nrmlmode":
       event = stdscr.getch()
       if event == ord("q"): break
