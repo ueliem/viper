@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import curses, traceback
+import curses, traceback, argparse, os
 from modes import *
 from editorenv import *
 
@@ -14,14 +14,20 @@ def cleanupcurses(stdscr):
     curses.nocbreak()
     curses.endwin()
 
-def main(stdscr):
+def main(stdscr, filebuffer=None):
     dimensions = stdscr.getmaxyx()
-    mybuf = ''
     modeman = ModeManager()
     modeman.add_mode(NormalMode())
     modeman.add_mode(InputMode())
     modeman.set_mode("inpmode")
     topmostlinenum = 0
+    mybuf = ''
+    if filebuffer != None:
+        mybuf = filebuffer
+        bottommostlinenum = (topmostlinenum + curses.LINES) - 1
+        for (index,line) in enumerate(mybuf.split("\n")[topmostlinenum:bottommostlinenum]):
+            stdscr.addstr(index, 0, line)
+        stdscr.refresh()
     while True:
         if modeman.current_mode.mode_id == "inpmode":
             # stdscr.addstr(5, 0, "Edit mode")
@@ -35,7 +41,7 @@ def main(stdscr):
             if is_chr(event):
                 mybuf += chr(event)
                 # stdscr.addstr(0,0, mybuf)
-            bottommostlinenum = topmostlinenum + curses.LINES
+            bottommostlinenum = (topmostlinenum + curses.LINES) - 1
             stdscr.erase()
             for (index,line) in enumerate(mybuf.split("\n")[topmostlinenum:bottommostlinenum]):
                 stdscr.addstr(index, 0, line)
@@ -59,7 +65,12 @@ if __name__=='__main__':
         # curses.curs_set(0)
         stdscr.keypad(1)
         stdscr.refresh()
-        main(stdscr)
+        parser = argparse.ArgumentParser(description='Process some integers.')
+        parser.add_argument('file', type=file, help='')
+        args = parser.parse_args()
+        path = os.path.abspath(args.file.name)
+        # print path
+        main(stdscr, open(path).read())
         cleanupcurses(stdscr)
     except:
         cleanupcurses(stdscr)
