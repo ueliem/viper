@@ -9,6 +9,8 @@ class InputMode(Mode):
         self.mode_id = "inpmode"
         self.cursorv = 0
         self.cursorh = 0
+    def run(self):
+        pass
 
 class NormalMode(Mode):
     def __init__(self):
