@@ -49,15 +49,22 @@ def inputMode(stdscr, edenv):
     charcount = 0
     for (index, line) in enumerate(lines):
         if edenv.cursorreal - (charcount) <= len(line):
-            if needstomovevert < 0:
-                edenv.cursorreal -= (len(lines[index-1]) + 1)
+            if needstomovevert < 0 and index > 0:
+                if len(lines[index-1]) >= edenv.cursorhori:
+                    edenv.cursorreal -= (len(lines[index-1]) + 1)
+                else:
+                    edenv.cursorreal -= (edenv.cursorhori) + 1
                 edenv.cursorvert = (index - 1)
                 edenv.cursorhori = (edenv.cursorreal - (charcount) + len(lines[index-1]) + 1)
-            elif needstomovevert > 0:
-                edenv.cursorreal += (len(line) + 1)
+                if edenv.cursorhori > len(lines[index-1]): edenv.cursorhori = len(lines[index-1])
+            elif needstomovevert > 0 and index < len(lines) - 1:
+                if len(lines[index+1]) >= edenv.cursorhori:
+                    edenv.cursorreal += (len(line) + 1)
+                else:
+                    edenv.cursorreal += (len(line) + 1)
                 edenv.cursorvert = (index + 1)
-                edenv.cursorhori = (edenv.cursorreal + len(line) + 1)
-                if edenv.cursorhori > len(line[index+1]): edenv.cursorhori = len(line[index+1])
+                edenv.cursorhori = (edenv.cursorreal - (charcount) - len(line) - 1)
+                if edenv.cursorhori > len(lines[index+1]): edenv.cursorhori = len(lines[index+1])
             else:
                 edenv.cursorvert = (index)
                 edenv.cursorhori = (edenv.cursorreal - (charcount))
