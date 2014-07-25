@@ -20,16 +20,17 @@ def registermode(mode):
 @registermode
 def inputMode(stdscr, edenv):
     # stdscr.addstr(edenv.dimensions[0] - 1, 0, "Edit mode")
+    needstomovevert = 0
     event = stdscr.getch()
     if event == 27:
         # modeman.set_mode("nrmlmode")
         pass
     if event == curses.KEY_UP:
-        pass
+        needstomovevert = -1
         # edenv.oldcursorvert = edenv.cursorvert
         # edenv.cursorvert -= 1
     elif event == curses.KEY_DOWN:
-        pass
+        needstomovevert = 1
         # edenv.oldcursorvert = edenv.cursorvert
         # edenv.cursorvert += 1
     elif event == curses.KEY_LEFT:
@@ -48,11 +49,22 @@ def inputMode(stdscr, edenv):
     charcount = 0
     for (index, line) in enumerate(lines):
         if edenv.cursorreal - (charcount) <= len(line):
-            edenv.cursorvert = (index)
-            edenv.cursorhori = (edenv.cursorreal - (charcount))
+            if needstomovevert < 0:
+                edenv.cursorreal -= (len(lines[index-1]) + 1)
+                edenv.cursorvert = (index - 1)
+                edenv.cursorhori = (edenv.cursorreal - (charcount) + len(lines[index-1]) + 1)
+            elif needstomovevert > 0:
+                edenv.cursorreal += (len(line) + 1)
+                edenv.cursorvert = (index + 1)
+                edenv.cursorhori = (edenv.cursorreal + len(line) + 1)
+                if edenv.cursorhori > len(line[index+1]): edenv.cursorhori = len(line[index+1])
+            else:
+                edenv.cursorvert = (index)
+                edenv.cursorhori = (edenv.cursorreal - (charcount))
             break
         else:
             charcount += len(line) + 1
+
     if edenv.cursorvert < 0: edenv.cursorvert = 0
     if edenv.cursorhori < 0: edenv.cursorhori = 0
     stdscr.move(edenv.cursorvert - edenv.topmostlinenum, edenv.cursorhori)
