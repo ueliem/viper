@@ -3,6 +3,87 @@ import curses, traceback, argparse, os, sys
 # from modes import *
 from editorenv import *
 
+def tokenize_command_structure(commandstring):
+    startstate = 0
+    numstate = 1
+    wordstate = 2
+    commastate = 3
+    curstate = startstate
+    tokenstack = []
+    charstack = []
+    for c in commandstring:
+        if curstate == startstate:
+            if c in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+                charstack.append(c)
+                curstate = numstate
+            elif c in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'):
+                charstack.append(c)
+                curstate = wordstate
+            elif c == ',':
+                charstack.append(c)
+                curstate = commastate
+            elif c == ' ':
+                continue
+        elif curstate == numstate:
+            if c in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+                charstack.append(c)
+            elif c in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'):
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = wordstate
+            elif c == ',':
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = commastate
+            elif c == ' ':
+                tokenstack.append("".join(charstack))
+                charstack = []
+        elif curstate == wordstate:
+            if c in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = numstate
+            elif c in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'):
+                charstack.append(c)
+            elif c == ',':
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = commastate
+            elif c == ' ':
+                tokenstack.append("".join(charstack))
+                charstack = []
+        elif curstate == commastate:
+            if c in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = numstate
+            elif c in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'):
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = wordstate
+            elif c == ',':
+                tokenstack.append("".join(charstack))
+                charstack = []
+                charstack.append(c)
+                curstate = commastate
+            elif c == ' ':
+                tokenstack.append("".join(charstack))
+                charstack = []
+    tokenstack.append("".join(charstack))
+    return tokenstack
+
+def parse_command_tokens(edenv, tokens):
+    if tokens[0] in custom_commands:
+        custom_commands[tokens[0]](edenv)
+    elif tokens[0] in default_commands:
+        default_commands[tokens[0]](edenv)
+
 def quit(edenv):
     # TODO check for file changes
     sys.exit(0)
@@ -45,10 +126,7 @@ def registermode(mode):
     return mode
 
 def parse_command(edenv, command):
-    if command in custom_commands:
-        custom_commands[command](edenv)
-    elif command in default_commands:
-        default_commands[command](edenv)
+    parse_command_tokens(edenv, tokenize_command_structure(command))
 
 @registermode
 def normalMode(stdscr, edenv):
