@@ -1,7 +1,18 @@
 #!/usr/bin/python
-import curses, traceback, argparse, os
+import curses, traceback, argparse, os, sys
 # from modes import *
 from editorenv import *
+
+def quit(edenv):
+    # TODO check for file changes
+    sys.exit(0)
+
+default_commands = {
+    "q" : quit,
+    "quit" : quit
+}
+
+custom_commands = {}
 
 def is_chr(possible):
     if possible < 256:
@@ -16,6 +27,31 @@ def cleanupcurses(stdscr):
 
 def registermode(mode):
     return mode
+
+def parse_command(edenv, command):
+    if command in custom_commands:
+        custom_commands[command](edenv)
+    elif command in default_commands:
+        default_commands[command](edenv)
+
+@registermode
+def normalMode(stdscr, edenv):
+    # TODO Add ability to move through file in this mode
+    event = stdscr.getch()
+    if event == 10:
+        parse_command(edenv, edenv.commandbuf[1:])
+        edenv.commandbuf = ""
+    elif event == 8 or event == 127:
+        edenv.commandbuf = edenv.commandbuf[:len(edenv.commandbuf)-1]
+    elif is_chr(event) and chr(event) == ":":
+        edenv.commandbuf += ":"
+    elif is_chr(event) and len(edenv.commandbuf) > 0 and edenv.commandbuf[0] == ":":
+        edenv.commandbuf += chr(event)
+    stdscr.erase()
+    lines = edenv.current_buffer().buf.split("\n")
+    for (index, line) in enumerate(lines[edenv.topmostlinenum:edenv.bottommostlinenum]):
+        stdscr.addstr(index, 0, line)
+    stdscr.addstr(edenv.dimensions[0] - 1, 0, edenv.commandbuf)
 
 @registermode
 def inputMode(stdscr, edenv):
@@ -83,8 +119,8 @@ def main(stdscr, edenv):
                 stdscr.addstr(index, 0, line)
         stdscr.refresh()
     while True:
-        if not inputMode(stdscr, edenv):
-            #switch state, or break
+        if not normalMode(stdscr, edenv):
+            # TODO switch state, or break
             pass
         stdscr.refresh()
 
@@ -117,6 +153,7 @@ if __name__=='__main__':
         edenv.cursorvert = 0
         edenv.cursorhori = 0
         edenv.oldcursorvert = 0
+        edenv.commandbuf = ""
         main(stdscr, edenv)
         cleanupcurses(stdscr)
     except:
