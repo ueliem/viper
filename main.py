@@ -7,9 +7,25 @@ def quit(edenv):
     # TODO check for file changes
     sys.exit(0)
 
+def writebuffertofile(edenv, filename=None):
+    if edenv.current_buffer().buf and filename == None and edenv.current_buffer().name:
+        target = open(edenv.current_buffer().name, 'w')
+        target.write(edenv.current_buffer().buf)
+        target.close()
+    elif edenv.current_buffer().buf and filename != None:
+        target = open(filename, 'w')
+        target.write(edenv.current_buffer().buf)
+        target.close()
+
+def writethenquit(edenv, filename=None):
+    writebuffertofile(edenv, filename)
+    quit(edenv)
+
 default_commands = {
     "q" : quit,
-    "quit" : quit
+    "quit" : quit,
+    "w" : writebuffertofile,
+    "wq" : writethenquit
 }
 
 custom_commands = {}
@@ -143,7 +159,9 @@ if __name__=='__main__':
         edenv = EditorEnv()
         if args.file:
             path = os.path.abspath(args.file.name)
-            edenv.loadbuf(Buffer(open(path).read(), path))
+            openedfile = open(path)
+            edenv.loadbuf(Buffer(openedfile.read(), path))
+            openedfile.close()
         else:
             edenv.loadbuf(Buffer("", None))
         edenv.dimensions = stdscr.getmaxyx()
