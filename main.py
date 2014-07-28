@@ -39,11 +39,11 @@ def inputMode(stdscr, edenv):
         # edenv.cursorhori += 1
         edenv.cursorreal += 1
     elif is_chr(event):
-        edenv.buf = edenv.buf[:edenv.cursorreal] + chr(event) + edenv.buf[edenv.cursorreal:]
+        edenv.current_buffer().buf = edenv.current_buffer().buf[:edenv.cursorreal] + chr(event) + edenv.current_buffer().buf[edenv.cursorreal:]
         edenv.cursorreal += 1
     edenv.bottommostlinenum = (edenv.topmostlinenum + edenv.dimensions[0]) - 1
     stdscr.erase()
-    lines = edenv.buf.split("\n")
+    lines = edenv.current_buffer().buf.split("\n")
     for (index, line) in enumerate(lines[edenv.topmostlinenum:edenv.bottommostlinenum]):
         stdscr.addstr(index, 0, line)
     charcount = 0
@@ -77,9 +77,9 @@ def inputMode(stdscr, edenv):
     stdscr.move(edenv.cursorvert - edenv.topmostlinenum, edenv.cursorhori)
 
 def main(stdscr, edenv):
-    if edenv.buf != None:
+    if edenv.current_buffer() != None:
         edenv.bottommostlinenum = (edenv.topmostlinenum + edenv.dimensions[0]) - 1
-        for (index, line) in enumerate(edenv.buf.split("\n")[edenv.topmostlinenum:edenv.bottommostlinenum]):
+        for (index, line) in enumerate(edenv.current_buffer().buf.split("\n")[edenv.topmostlinenum:edenv.bottommostlinenum]):
                 stdscr.addstr(index, 0, line)
         stdscr.refresh()
     while True:
@@ -107,7 +107,9 @@ if __name__=='__main__':
         edenv = EditorEnv()
         if args.file:
             path = os.path.abspath(args.file.name)
-            edenv.buf = open(path).read()
+            edenv.loadbuf(Buffer(open(path).read(), path))
+        else:
+            edenv.loadbuf(Buffer("", None))
         edenv.dimensions = stdscr.getmaxyx()
         edenv.topmostlinenum = 0
         edenv.bottommostlinenum = (edenv.topmostlinenum + edenv.dimensions[0]) - 1
